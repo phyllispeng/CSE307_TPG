@@ -1,5 +1,9 @@
+#Name: Yuanyuan Peng
+#ID: 108 734 720
+
 import sys
 import tpg
+
 
 class SemanticError(Exception):
 
@@ -21,18 +25,25 @@ class Node(object):
         raise Exception("Not implemented.")
 
 class Value(Node):
-     """
-     A node representing integer literals.
-     """
+    """
+    A node representing integer literals.
+    """
 
-     def __init__(self, value):
-         value_type = type(value)
-         print(value_type)
-         self.value = int(value)
+    def __init__(self, value):
 
+        if isinstance(value,list):
+            self.value=list(value)
+        elif value.isdigit():
+            self.value = int(value)
+        else:
+            try:
+                float(value)
+                self.value = float(value)
+            except ValueError:
+                self.value = str(value)
 
-     def evaluate(self):
-         return self.value
+    def evaluate(self):
+        return self.value
 
 class Add(Node):
     """
@@ -45,11 +56,16 @@ class Add(Node):
         self.left = left
         self.right = right
     def evaluate(self):
+
         left = self.left.evaluate()
         right = self.right.evaluate()
-        if not isinstance(left, int):
+        if isinstance(left, str) and isinstance(right, str):
+            left = left.replace('"','')
+            right = right.replace('"','')
+            return str(left + right)
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
             raise SemanticError()
-        if not isinstance(right, int):
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
             raise SemanticError()
         return left + right
 
@@ -65,9 +81,9 @@ class Minus(Node):
     def evaluate(self):
         left = self.left.evaluate()
         right = self.right.evaluate()
-        if not isinstance(left, int):
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
             raise SemanticError()
-        if not isinstance(right, int):
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
             raise SemanticError()
         return left - right
 
@@ -85,9 +101,9 @@ class Multiply(Node):
     def evaluate(self):
         left = self.left.evaluate()
         right = self.right.evaluate()
-        if not isinstance(left, int):
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
             raise SemanticError()
-        if not isinstance(right, int):
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
             raise SemanticError()
         return left * right
 
@@ -105,13 +121,34 @@ class Divide(Node):
     def evaluate(self):
         left = self.left.evaluate()
         right = self.right.evaluate()
-        if not isinstance(left, int):
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
             raise SemanticError()
-        if not isinstance(right, int):
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
             raise SemanticError()
         if right == 0:
             raise SemanticError()
         return left / right
+
+class Mod(Node):
+    """
+    A node representing Mod
+    """
+    def __init__(self, left, right):
+        # The nodes representing the left and right sides of this
+        # operation.
+        self.left = left
+        self.right = right
+
+    def evaluate(self):
+        left = self.left.evaluate()
+        right = self.right.evaluate()
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
+            raise SemanticError()
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
+            raise SemanticError()
+        if right == 0:
+            raise SemanticError()
+        return left % right
 
 class Smaller(Node):
     """
@@ -127,9 +164,9 @@ class Smaller(Node):
     def evaluate(self):
         left = self.left.evaluate()
         right = self.right.evaluate()
-        if not isinstance(left, int):
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
             raise SemanticError()
-        if not isinstance(right, int):
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
             raise SemanticError()
         if left < right:
             return 1
@@ -151,9 +188,9 @@ class Equals(Node):
     def evaluate(self):
         left = self.left.evaluate()
         right = self.right.evaluate()
-        if not isinstance(left, int):
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
             raise SemanticError()
-        if not isinstance(right, int):
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
             raise SemanticError()
         if left == right:
             return 1
@@ -175,9 +212,9 @@ class Greater(Node):
     def evaluate(self):
         left = self.left.evaluate()
         right = self.right.evaluate()
-        if not isinstance(left, int):
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
             raise SemanticError()
-        if not isinstance(right, int):
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
             raise SemanticError()
         if left > right:
             return 1
@@ -217,29 +254,22 @@ class bool_AND(Node):
 
 class bool_NOT(Node):
     """
-    A node representing Larger.
+    A node representing NOT.
     """
-
-    def __init__(self, left, right):
-        # The nodes representing the left and right sides of this
-        # operation.
-        #self.left = left
-        self.right = right
-
-
+    def __init__(self, node_b):
+        self.node_b = node_b
     def evaluate(self):
-        #left = self.left.evaluate()
-        right = self.right.evaluate()
 
-        if  right != 0:
-            right = True
+        node_b = self.node_b.evaluate()
+        if node_b != 0:
+            node_b = True
         else:
-            right = False
-
-        if  right:
+            node_b = False
+        if node_b:
             return 0
         else:
             return 1
+
 
 class bool_OR(Node):
     def __init__(self, left, right):
@@ -265,36 +295,66 @@ class bool_OR(Node):
             return 1
         else:
             return 0
+
+class Index_Of(Node):
+    def __init__(self, left, right):
+        # The nodes representing the left and right sides of this
+        # operation.
+        self.left = left
+        self.right = right
+
+
+    def evaluate(self):
+        left = self.left.evaluate()
+        right = self.right.evaluate()
+
+        if isinstance(left, list):
+            return  left[right]
+        else:
+            left=left.replace('"','')
+            return left[right]
+
+
+
+
+
 # This is the TPG Parser that is responsible for turning our language into
 # an abstract syntax tree.
 class Parser(tpg.Parser):
+
     """
-    token value "(\d+)|(\d+\.\d*|\d*\.\d+)|(\\"([^\\"])*\\")" Value
+    token value "(\d+\.\d*|\d*\.\d+)|(\d+)|(\\"([^\\"])*\\")" Value
     separator space "\s+";
 
-    START/a -> expression/a
-    ;
+    START/a -> expression/a;
 
     expression/a -> boolOR/a;
-    boolOR/a -> boolNOT/a ("or" boolNOT/b $ a = bool_OR(a,b) $)*;
-    boolNOT/a -> boolAND/a ("not" boolAND/b $ a = bool_NOT(b,b) $)*;
-    boolAND/a -> comparision/a ("and" comparision/b $ a = bool_AND(a,b) $)*;
+    boolOR/a -> boolAND/a ("or" boolAND/b $ a = bool_OR(a,b) $)*;
+    boolAND/a -> boolNOT/a ("and" boolNOT/b $ a = bool_AND(a,b) $)*;
+    boolNOT/a -> comparision/a |"not" expression/b $ a = bool_NOT(b) $;
     comparision/a -> addsub/a ("<" addsub/b $ a = Smaller(a,b) $
      | "==" addsub/b $ a = Equals(a,b) $
      | ">" addsub/b $ a = Greater(a,b) $)* ;
 
-    addsub/a -> muldiv/a ("\+" muldiv/b $ a = Add(a, b) $
-    | "\-" muldiv/b $ a = Minus(a, b) $)* ;
+    addsub/a -> muldivmod/a ("\+" muldivmod/b $ a = Add(a, b) $
+    | "\-" muldivmod/b $ a = Minus(a, b) $)* ;
 
-    muldiv/a -> parens/a
-    ( "\*" parens/b $ a = Multiply(a, b) $
-    | "/"  parens/b $ a = Divide(a, b) $
+    muldivmod/a -> index/a
+    ( "\*" index/b $ a = Multiply(a, b) $
+    | "/"  index/b $ a = Divide(a, b) $
+    | "\%" index/b $ a = Mod(a,b) $
     )* ;
-
+    index/a -> parens/a ("\[" expression/b "\]"  $ a = Index_Of(a,b) $ )*;
     parens/a -> "\(" expression/a "\)" | literal/a
     ;
 
-    literal/a -> value/a;
+    literal/a -> value/a|array/a;
+    array/a -> "\[" $ a = Value([]) $
+        expression/b $ a.value.append(b.evaluate()) $
+    (","expression/b $ a.value.append(b.evaluate()) $ )*
+    "\]"
+    | "\[" "\]" $ a = Value([]) $;
+
     """
 
 # Make an instance of the parser. This acts like a function.
@@ -314,7 +374,7 @@ for l in f:
     try:
         # Try to parse the expression.
         node = parse(l)
-
+        #print(repr(node))
         # Try to get a result.
         result = node.evaluate()
 
