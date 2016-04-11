@@ -4,6 +4,7 @@
 import sys
 import tpg
 
+dict1 = {}
 
 class SemanticError(Exception):
 
@@ -44,6 +45,18 @@ class Value(Node):
 
     def evaluate(self):
         return self.value
+
+
+class Variable(Node):
+	"""
+	A node representing variables
+	"""
+	print("in variable")
+	def __init__(self, variable):
+		self.variable = str(variable)
+	def evaluate(self):
+		return self.variable
+
 
 class Add(Node):
     """
@@ -221,6 +234,77 @@ class Greater(Node):
         else:
             return 0
 
+class LessEqual(Node):
+
+    """
+    A node representing LessEqual.
+    """
+
+    def __init__(self, left, right):
+        # The nodes representing the left and right sides of this
+        # operation.
+        self.left = left
+        self.right = right
+
+    def evaluate(self):
+        left = self.left.evaluate()
+        right = self.right.evaluate()
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
+            raise SemanticError()
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
+            raise SemanticError()
+        if left <= right:
+            return 1
+        else:
+            return 0
+
+class NotEquals(Node):
+
+    """
+    A node representing NOTEquals.
+    """
+
+    def __init__(self, left, right):
+        # The nodes representing the left and right sides of this
+        # operation.
+        self.left = left
+        self.right = right
+
+    def evaluate(self):
+        left = self.left.evaluate()
+        right = self.right.evaluate()
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
+            raise SemanticError()
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
+            raise SemanticError()
+        if left != right:
+            return 1
+        else:
+            return 0
+
+class GreatEqual(Node):
+
+    """
+    A node representing GreatEqual.
+    """
+
+    def __init__(self, left, right):
+        # The nodes representing the left and right sides of this
+        # operation.
+        self.left = left
+        self.right = right
+
+    def evaluate(self):
+        left = self.left.evaluate()
+        right = self.right.evaluate()
+        if (not isinstance(left, int)) and (not isinstance(left, float)):
+            raise SemanticError()
+        if (not isinstance(right, int)) and (not isinstance(right, float)):
+            raise SemanticError()
+        if left >= right:
+            return 1
+        else:
+            return 0
 
 
 class bool_AND(Node):
@@ -315,7 +399,16 @@ class Index_Of(Node):
             return left[right]
 
 
+class saveVar(Node):
+	def __init__(self, left, right):
+		self.left = left
+		self.right = right
+	def evaluate(self):
+		left = self.left.evaluate()
+		right = self.right.evaluate()
 
+		dict2 = {left:right}
+		dict1.update(dict2)
 
 
 # This is the TPG Parser that is responsible for turning our language into
@@ -324,6 +417,7 @@ class Parser(tpg.Parser):
 
     """
     token value "(\d+\.\d*|\d*\.\d+)|(\d+)|(\\"([^\\"])*\\")" Value
+    token variable "([A-Za-z][A-Za-z0-9_]*)" Variable
     separator space "\s+";
 
     START/a -> expression/a;
@@ -332,23 +426,28 @@ class Parser(tpg.Parser):
     boolOR/a -> boolAND/a ("or" boolAND/b $ a = bool_OR(a,b) $)*;
     boolAND/a -> boolNOT/a ("and" boolNOT/b $ a = bool_AND(a,b) $)*;
     boolNOT/a -> comparision/a |"not" expression/b $ a = bool_NOT(b) $;
-    comparision/a -> addsub/a ("<" addsub/b $ a = Smaller(a,b) $
+    comparision/a -> addsub/a (
+    "<>" addsub/b $ a = NotEquals(a,b) $
+    |"<=" addsub/b $ a = LessEqual(a,b) $
+    |"<" addsub/b $ a = Smaller(a,b) $
      | "==" addsub/b $ a = Equals(a,b) $
+     |">=" addsub/b $ a = GreatEqual(a,b) $
      | ">" addsub/b $ a = Greater(a,b) $)* ;
 
     addsub/a -> muldivmod/a ("\+" muldivmod/b $ a = Add(a, b) $
     | "\-" muldivmod/b $ a = Minus(a, b) $)* ;
 
-    muldivmod/a -> index/a
-    ( "\*" index/b $ a = Multiply(a, b) $
-    | "/"  index/b $ a = Divide(a, b) $
-    | "\%" index/b $ a = Mod(a,b) $
+    muldivmod/a -> savevar/a
+    ( "\*" savevar/b $ a = Multiply(a, b) $
+    | "/"  savevar/b $ a = Divide(a, b) $
+    | "\%" savevar/b $ a = Mod(a,b) $
     )* ;
+	savevar/a -> index/a ("=" index/b $ a = saveVar(a , b) $)*;
     index/a -> parens/a ("\[" expression/b "\]"  $ a = Index_Of(a,b) $ )*;
     parens/a -> "\(" expression/a "\)" | literal/a
     ;
 
-    literal/a -> value/a|array/a;
+    literal/a -> value/a|array/a|variable/a;
     array/a -> "\[" $ a = Value([]) $
         expression/b $ a.value.append(b.evaluate()) $
     (","expression/b $ a.value.append(b.evaluate()) $ )*
@@ -393,5 +492,5 @@ for l in f:
         # Uncomment the next line to re-raise the semantic error,
         # displaying where it occurs. Comment it for submission.
         #raise
-
+print(dict1)
 f.close()
