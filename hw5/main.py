@@ -25,6 +25,19 @@ class Node(object):
         """
         raise Exception("Not implemented.")
 
+
+class Exe(Node):
+
+	print("+++Exe+++")
+	
+	def __init__(self,statement):
+		self.statement = statement
+		print(dict1)
+	def execute(self):
+		for state in self.statement:	
+			state.execute()
+
+
 class Value(Node):
     """
     A node representing integer literals.
@@ -42,7 +55,8 @@ class Value(Node):
                 self.value = float(value)
             except ValueError:
                 self.value = str(value)
-
+        print("in value")
+        print(self.value)
     def evaluate(self):
         return self.value
 
@@ -54,10 +68,10 @@ class Variable(Node):
 	print("in variable")
 	def __init__(self, variable):
 		self.variable = str(variable)
+		 
 	def evaluate(self):
 		return self.variable
-
-
+		
 class Add(Node):
     """
     A node representing addition
@@ -400,7 +414,9 @@ class Index_Of(Node):
 
 
 class saveVar(Node):
+	print("in saveVar")
 	def __init__(self, left, right):
+
 		self.left = left
 		self.right = right
 	def evaluate(self):
@@ -420,9 +436,20 @@ class Parser(tpg.Parser):
     token variable "([A-Za-z][A-Za-z0-9_]*)" Variable
     separator space "\s+";
 
-    START/a -> expression/a;
+    START/a -> executable/a;
 
-    expression/a -> boolOR/a;
+    executable/a -> (
+    "{" $ a = [] $ 
+    		(executable/b $ a.append(b) $)* 
+    "}" $ a = Exe(a) $
+    |variable/b "=" expression/c ";"  $ a = saveVar( b, c ) $
+    |"print" "\(" expression/b "\)" ";" $ a = printStatement(b) $
+    |"if" "\(" expression/b "\)" executable/a $ a = ifStatement(a,b)$
+    |"else" executable/a $ a = elseStatement(a) $
+    |"while" "\(" expression/b "\)" executable/a $ a = whileLoop(b ,a) $
+    );
+
+    expression/a ->boolOr/a;
     boolOR/a -> boolAND/a ("or" boolAND/b $ a = bool_OR(a,b) $)*;
     boolAND/a -> boolNOT/a ("and" boolNOT/b $ a = bool_AND(a,b) $)*;
     boolNOT/a -> comparision/a |"not" expression/b $ a = bool_NOT(b) $;
@@ -447,7 +474,7 @@ class Parser(tpg.Parser):
     parens/a -> "\(" expression/a "\)" | literal/a
     ;
 
-    literal/a -> value/a|array/a|variable/a;
+    literal/a -> value/a|array/a;
     array/a -> "\[" $ a = Value([]) $
         expression/b $ a.value.append(b.evaluate()) $
     (","expression/b $ a.value.append(b.evaluate()) $ )*
@@ -465,32 +492,32 @@ parse = Parser()
 # Open the file containing the input.
 try:
     f = open(sys.argv[1], "r")
+
 except(IndexError, IOError):
     f = open("input1.txt", "r")
 
 # For each line in f
-for l in f:
-    try:
+inputfile = f.read()
+try:
         # Try to parse the expression.
-        node = parse(l)
+    node = parse(inputfile)
         #print(repr(node))
         # Try to get a result.
-        result = node.evaluate()
-
+    node.execute()
+    print(dict1)
         # Print the representation of the result.
-        print(repr(result))
+    #print(repr(result))
 
     # If an exception is thrown, print the appropriate error.
-    except tpg.Error:
-        print("SYNTAX ERROR")
+except tpg.Error:
+    print("SYNTAX ERROR")
         # Uncomment the next line to re-raise the syntax error,
         # displaying where it occurs. Comment it for submission.
         # raise
-
-    except SemanticError:
-        print("SEMANTIC ERROR")
+except SemanticError:
+    print("SEMANTIC ERROR")
         # Uncomment the next line to re-raise the semantic error,
         # displaying where it occurs. Comment it for submission.
         #raise
-print(dict1)
+
 f.close()
