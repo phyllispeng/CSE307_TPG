@@ -2,5 +2,6 @@
 tea
 Apple = pear
 PAUL = 28
-A = 23
-aPple
+A = [1,2,3][0]
+B = 2 + 5
+C = 5<7

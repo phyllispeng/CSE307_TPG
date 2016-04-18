@@ -426,23 +426,23 @@ class Parser(tpg.Parser):
     boolOR/a -> boolAND/a ("or" boolAND/b $ a = bool_OR(a,b) $)*;
     boolAND/a -> boolNOT/a ("and" boolNOT/b $ a = bool_AND(a,b) $)*;
     boolNOT/a -> comparision/a |"not" expression/b $ a = bool_NOT(b) $;
-    comparision/a -> addsub/a (
-    "<>" addsub/b $ a = NotEquals(a,b) $
-    |"<=" addsub/b $ a = LessEqual(a,b) $
-    |"<" addsub/b $ a = Smaller(a,b) $
-     | "==" addsub/b $ a = Equals(a,b) $
-     |">=" addsub/b $ a = GreatEqual(a,b) $
-     | ">" addsub/b $ a = Greater(a,b) $)* ;
-
+    comparision/a -> savevar/a (
+    "<>" savevar/b $ a = NotEquals(a,b) $
+    |"<=" savevar/b $ a = LessEqual(a,b) $
+    |"<" savevar/b $ a = Smaller(a,b) $
+     | "==" savevar/b $ a = Equals(a,b) $
+     |">=" savevar/b $ a = GreatEqual(a,b) $
+     | ">" savevar/b $ a = Greater(a,b) $)* ;
+    savevar/a -> addsub/a ("=" addsub/b $ a = saveVar(a, b)$)*;
     addsub/a -> muldivmod/a ("\+" muldivmod/b $ a = Add(a, b) $
     | "\-" muldivmod/b $ a = Minus(a, b) $)* ;
 
-    muldivmod/a -> savevar/a
-    ( "\*" savevar/b $ a = Multiply(a, b) $
-    | "/"  savevar/b $ a = Divide(a, b) $
-    | "\%" savevar/b $ a = Mod(a,b) $
+    muldivmod/a -> index/a
+    ( "\*" index/b $ a = Multiply(a, b) $
+    | "/"  index/b $ a = Divide(a, b) $
+    | "\%" index/b  $ a = Mod(a,b) $
     )* ;
-	savevar/a -> index/a ("=" index/b $ a = saveVar(a , b) $)*;
+	 
     index/a -> parens/a ("\[" expression/b "\]"  $ a = Index_Of(a,b) $ )*;
     parens/a -> "\(" expression/a "\)" | literal/a
     ;
