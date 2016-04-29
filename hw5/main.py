@@ -598,15 +598,20 @@ class Parser(tpg.Parser):
 
 	START/a -> statement/a;
 
-	statement/a -> (
-	"{" $ a = [] $
+	statement/a -> (block/a | code/a);
+
+	block/a -> "{" $ a = [] $
 			(statement/b $ a.append(b) $)*
-	"}" $ a = Exe(a) $
-	| expression/b "=(?!=)" expression/c ";"  $ a = saveVar( b, c ) $
+	"}" $ a = Exe(a) $;
+
+	code/a->(
+	expression/b "=(?!=)" expression/c ";"  $ a = saveVar( b, c ) $
 	| "print" "\(" expression/b "\)" ";" $ a = printStatement(b) $
 	| "if" "\(" expression/e"\)" statement/d "else" statement/s $ a = elseStatement(e,d,s) $
 	| "if" "\(" expression/b "\)" statement/a $ a = ifStatement(b,a)$
 	| "while" "\(" expression/b "\)" statement/a $ a = whileLoop(b ,a) $
+	| "return" expression/a $ a = Return(a) $
+	
 	);
 
 	expression/a ->boolOR/a;
