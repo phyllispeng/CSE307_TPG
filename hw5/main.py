@@ -598,11 +598,16 @@ class Parser(tpg.Parser):
 
 	START/a -> statement/a;
 
-	statement/a -> (block/a | code/a);
+	statement/a -> (block/a | func_def/a | code/a);
 
 	block/a -> "{" $ a = [] $
 			(statement/b $ a.append(b) $)*
 	"}" $ a = Exe(a) $;
+
+	func_def/a -> variable/v params/p block/b $ a = ProcDef(v,p,b) $;
+
+	params/a -> "\(" $ a = [] $ (variable/b $ a = a.append(b) $)? 
+	(","variable/b $a.append(b)$)* "\)";
 
 	code/a->(
 	expression/b "=(?!=)" expression/c ";"  $ a = saveVar( b, c ) $
@@ -611,7 +616,8 @@ class Parser(tpg.Parser):
 	| "if" "\(" expression/b "\)" statement/a $ a = ifStatement(b,a)$
 	| "while" "\(" expression/b "\)" statement/a $ a = whileLoop(b ,a) $
 	| "return" expression/a $ a = Return(a) $
-	
+	| variable/v param_list/l $ a = ProCall(v,l) $
+
 	);
 
 	expression/a ->boolOR/a;
