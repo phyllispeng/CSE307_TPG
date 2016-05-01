@@ -609,6 +609,8 @@ class Parser(tpg.Parser):
 	params/a -> "\(" $ a = [] $ (variable/b $ a = a.append(b) $)? 
 	(","variable/b $a.append(b)$)* "\)";
 
+	param_list/a -> "\(" $ a=[] $ (expression/e $ a.append(e)$)?
+	("," expression/e $a.append(e)$)* "\)";
 	code/a->(
 	expression/b "=(?!=)" expression/c ";"  $ a = saveVar( b, c ) $
 	| "print" "\(" expression/b "\)" ";" $ a = printStatement(b) $
